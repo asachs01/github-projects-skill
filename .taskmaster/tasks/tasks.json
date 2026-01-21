@@ -2,218 +2,223 @@
   "master": {
     "tasks": [
       {
-        "id": 1,
+        "id": "1",
         "title": "Create GitHub Projects Skill Directory Structure",
         "description": "Set up the initial folder structure and core files for the Claude.ai skill as specified in the PRD.",
         "details": "Create directories: github-projects/, references/, scripts/. Add SKILL.md with overview, instructions for token setup (scopes: repo, project, read:org), and usage examples. Include placeholder config YAML with example projects (DocuGen, AFKBot, WYRE-Internal).",
         "testStrategy": "Verify directory structure matches PRD spec, SKILL.md renders correctly in Claude.ai, config YAML parses validly with js-yaml.",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-01-21T20:05:07.725Z"
       },
       {
-        "id": 2,
+        "id": "2",
         "title": "Implement Project Configuration Parser",
         "description": "Parse YAML config to load ProjectConfig interfaces for multiple organizations and projects.",
         "details": "Write TypeScript function to parse config YAML into ProjectConfig[] array. Validate required fields (name, org, projectNumber, repos). Support single repo or repos[]. Use libraries: js-yaml, zod for schema validation. Store in global config object.",
         "testStrategy": "Unit tests with example configs (single/multi repo, org/user). Test invalid configs throw errors. Snapshot parsed objects match TypeScript interface.",
         "priority": "high",
         "dependencies": [
-          1
+          "1"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 3,
+        "id": "3",
         "title": "Develop GitHub GraphQL Client with Authentication",
         "description": "Create authenticated GraphQL client for Projects V2 API using user-provided token.",
         "details": "Use graphql-request or apollo-client. Implement token validation (check scopes via /user). Cache project node IDs by org/project_number using GitHub's node(id) query. Handle rate limiting with exponential backoff. Reference: https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects[1].",
         "testStrategy": "Mock GitHub API responses. Test token auth success/failure. Verify project ID resolution for configured projects.",
         "priority": "high",
         "dependencies": [
-          2
+          "2"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 4,
+        "id": "4",
         "title": "Create GraphQL Queries Reference Document",
         "description": "Document essential GraphQL queries for project fields, items, and status aggregation.",
         "details": "In references/graphql-queries.md: Query project fields (status field ID), project items by status, item details (title, url, labels, updatedAt). Include pagination. Test queries against real project. Add field-mappings.md for status_field_mapping.",
         "testStrategy": "Run queries against test project, verify responses match expected structure (ProjectStatus interface). Save as markdown snippets.",
         "priority": "medium",
         "dependencies": [
-          3
+          "3"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 5,
+        "id": "5",
         "title": "Implement Single Project Status Query Handler",
         "description": "Handle 'What's the status on [project]?' with summary and item lists.",
         "details": "Parse natural language for project name. Query project items grouped by status_field_mapping. Aggregate counts (inProgress, blocked, etc.). Format response matching example interaction. Limit to top 5 items per category.",
         "testStrategy": "Test with mock data for DocuGen project. Verify counts accurate, formatting matches spec, handles unknown projects gracefully.",
         "priority": "high",
         "dependencies": [
-          4
+          "4"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 6,
+        "id": "6",
         "title": "Build Cross-Project Aggregated Queries",
         "description": "Support 'what's blocking?', 'standup summary', 'open issues count' across all configured projects.",
         "details": "Aggregate queries across ProjectConfig[]. Implement 'what's blocking right now?' (Blocked column/label), 'standup summary' (all projects), total open count. Use parallel API calls with Promise.all().",
         "testStrategy": "Test with multi-project config. Verify aggregation correct, performance under 5s for 5 projects.",
         "priority": "medium",
         "dependencies": [
-          5
+          "5"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 7,
+        "id": "7",
         "title": "Implement Time-Based Status Queries",
         "description": "Add 'what did I ship this week?' and recent completions filtering.",
         "details": "Query closed issues/pulls last 7 days per project. Filter by updatedAt/closedAt. Support 'this week' natural language parsing. Include ProjectItem details.",
         "testStrategy": "Mock date filtering. Test edge cases (no completions, partial week, different timezones).",
         "priority": "medium",
         "dependencies": [
-          6
+          "6"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 8,
+        "id": "8",
         "title": "Develop Issue Creation Functionality",
         "description": "Handle 'Create an issue for [title] in [project]' using REST API.",
         "details": "Use POST /repos/{owner}/{repo}/issues. Auto-select repo from project config. Add labels from config (priority:, type:). Immediately add to project board via GraphQL addProjectV2ItemById.",
         "testStrategy": "Create test issue in test repo/project. Verify issue exists, added to correct project/status.",
         "priority": "high",
         "dependencies": [
-          3
+          "3"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 9,
+        "id": "9",
         "title": "Implement Project Item Status Updates",
         "description": "Support 'move [task] to [status]' and blocked status setting.",
         "details": "Fuzzy match issue title. Use GraphQL updateProjectV2ItemFieldValue for status field. Map natural language to status_field_mapping values. For blocked: set blockedReason custom field if exists.",
         "testStrategy": "Test status changes on real project items. Verify UI reflects changes immediately.",
         "priority": "high",
         "dependencies": [
-          8
+          "8"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 10,
+        "id": "10",
         "title": "Add Comment and Note Functionality",
         "description": "Implement 'add note to [task]: [note]' using REST comments API.",
         "details": "Fuzzy search issues by title. POST /issues/{number}/comments. Support threading if reply-to-comment specified.",
         "testStrategy": "Verify comments appear on correct issues. Test fuzzy matching accuracy.",
         "priority": "medium",
         "dependencies": [
-          9
+          "9"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 11,
+        "id": "11",
         "title": "Setup Taskmaster Hook Script Structure",
         "description": "Create standalone TypeScript/Node.js hook script for Taskmaster integration.",
         "details": "ts-node or esbuild for execution. Read config YAML. Parse tasks.json (Taskmaster format). Track sync state in separate sync-state.json. Use same GitHub client as skill.",
         "testStrategy": "Run script with sample tasks.json, verify config loads, sync state initializes.",
         "priority": "high",
         "dependencies": [
-          2,
-          3
+          "2",
+          "3"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 12,
+        "id": "12",
         "title": "Implement Taskmaster Tasks to GitHub Issues Mapping",
         "description": "Convert Taskmaster task objects to GitHub issues with proper field mapping.",
         "details": "Map per PRD table: title→title, description+details→body, priority→labels, dependencies→body text 'Depends on #X'. Format testStrategy section. Skip already synced tasks via sync-state.json.",
         "testStrategy": "End-to-end test: input tasks.json → verify created issues match mapping exactly.",
         "priority": "high",
         "dependencies": [
-          11
+          "11"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 13,
+        "id": "13",
         "title": "Add New Issues to Project Boards with Initial Status",
         "description": "Automatically add created issues to correct project board with Backlog/Ready status.",
         "details": "After issue creation, use GraphQL addProjectV2ItemById. Set initial_status based on dependencies (Ready if none, Backlog if deps exist). Use project_selector logic from config.",
         "testStrategy": "Verify issues appear in correct project/status column. Test dependency-based status logic.",
         "priority": "high",
         "dependencies": [
-          12
+          "12"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 14,
+        "id": "14",
         "title": "Implement Taskmaster Sync State Management",
         "description": "Track which tasks have been synced to prevent duplicates and store mappings.",
         "details": "Maintain sync-state.json with taskMappings {taskmasterId → {githubIssueNumber, url}}. Check before creating. Update after successful sync. Handle partial failures gracefully.",
         "testStrategy": "Test idempotency: run hook twice on same tasks.json, verify no duplicates.",
         "priority": "medium",
         "dependencies": [
-          13
+          "13"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 15,
+        "id": "15",
         "title": "Create Comprehensive Documentation and Examples",
         "description": "Document full setup, usage, and example interactions for both components.",
         "details": "Update SKILL.md with all query patterns. Add references/config-example.md, api-patterns.md. Hook README with npm run sync-tasks command. Include troubleshooting (token scopes, project numbers).",
         "testStrategy": "Validate all documented queries/examples work end-to-end. Create setup checklist.",
         "priority": "medium",
         "dependencies": [
-          10,
-          14
+          "10",
+          "14"
         ],
         "status": "pending",
         "subtasks": []
       },
       {
-        "id": 16,
+        "id": "16",
         "title": "Add Advanced Features: Milestones and PR Linking",
         "description": "Implement milestone creation and PR-issue linking from Phase 4.",
         "details": "POST /repos/{owner}/{repo}/milestones. Parse 'link task #X to PR #Y' → add URL to issue body or use GitHub's PR references. Suggest PR links for in-progress issues.",
         "testStrategy": "Test milestone creation, PR linking updates issue correctly.",
         "priority": "low",
         "dependencies": [
-          10
+          "10"
         ],
         "status": "pending",
         "subtasks": []
       }
     ],
     "metadata": {
-      "created": "2026-01-21T19:29:55.783Z",
-      "updated": "2026-01-21T19:29:55.783Z",
-      "description": "Tasks for master context"
+      "version": "1.0.0",
+      "lastModified": "2026-01-21T20:05:07.726Z",
+      "taskCount": 16,
+      "completedCount": 1,
+      "tags": [
+        "master"
+      ]
     }
   }
 }
