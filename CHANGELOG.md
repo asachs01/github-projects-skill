@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- One-line curl-bash installer for dead simple setup
+  - Installs to `~/.claude/skills/github-projects-skill`
+  - Auto-creates sample `config.yaml`
+  - Links skill to Claude Code
 - Robust sync state management with idempotency support
   - Atomic file writes using temp file + rename pattern to prevent corruption
   - Lock file mechanism for concurrent access protection (`acquireLock()`, `releaseLock()`)

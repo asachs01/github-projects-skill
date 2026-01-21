@@ -12,9 +12,23 @@ A conversational interface for managing GitHub Projects with Taskmaster integrat
 
 ## Quick Start
 
-### Installation
+### One-Line Install
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/asachs01/github-projects-skill/main/install.sh | bash
+```
+
+This will:
+- Clone the repo to `~/.claude/skills/github-projects-skill`
+- Install dependencies and build
+- Create a sample `config.yaml`
+- Link the skill to Claude Code
+
+### Manual Installation
+
+```bash
+git clone https://github.com/asachs01/github-projects-skill.git
+cd github-projects-skill
 npm install
 npm run build
 ```
