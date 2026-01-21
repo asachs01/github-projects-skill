@@ -188,3 +188,110 @@ export interface AggregatedQueryOptions {
   /** Whether to continue if some projects fail */
   continueOnError?: boolean;
 }
+
+// ============================================================================
+// Time-Based Query Types
+// ============================================================================
+
+/**
+ * Supported time range presets for natural language parsing
+ */
+export type TimeRangePreset =
+  | 'today'
+  | 'this_week'
+  | 'last_7_days'
+  | 'last_30_days'
+  | 'this_month'
+  | 'last_month';
+
+/**
+ * Parsed time range with start and end dates
+ */
+export interface TimeRange {
+  /** Start of the time range (inclusive) */
+  start: Date;
+  /** End of the time range (inclusive) */
+  end: Date;
+  /** Human-readable description of the time range */
+  description: string;
+}
+
+/**
+ * Result of parsing a natural language time-based query
+ */
+export interface ParsedTimeQuery {
+  /** Detected time range preset */
+  preset: TimeRangePreset | null;
+  /** Computed time range */
+  timeRange: TimeRange | null;
+  /** Confidence level of the extraction (0-1) */
+  confidence: number;
+  /** Original query text */
+  originalQuery: string;
+}
+
+/**
+ * A shipped/completed item with project context and timing info
+ */
+export interface ShippedItem {
+  /** Issue/PR number */
+  number: number;
+  /** Issue/PR title */
+  title: string;
+  /** URL to the issue/PR */
+  url: string;
+  /** Project name this item belongs to */
+  projectName: string;
+  /** Date when the item was closed/completed */
+  closedAt: Date;
+  /** Day of week when closed (e.g., "Mon", "Tue") */
+  closedDay: string;
+}
+
+/**
+ * Per-project summary of shipped items
+ */
+export interface ProjectShippedSummary {
+  /** Project name */
+  projectName: string;
+  /** Items shipped in the time range */
+  items: ShippedItem[];
+  /** Count of shipped items */
+  count: number;
+  /** Whether fetching this project succeeded */
+  success: boolean;
+  /** Error message if fetching failed */
+  error?: string;
+}
+
+/**
+ * Response for time-based "what did I ship?" query
+ */
+export interface ShippedItemsResponse {
+  /** Whether the overall query was successful */
+  success: boolean;
+  /** Error message if all projects failed */
+  error?: string;
+  /** Per-project shipped item summaries */
+  projectSummaries: ProjectShippedSummary[];
+  /** Total items shipped across all projects */
+  totalShipped: number;
+  /** The time range that was queried */
+  timeRange: TimeRange;
+  /** Timestamp when the data was fetched */
+  fetchedAt: Date;
+}
+
+/**
+ * Options for time-based queries
+ */
+export interface TimeBasedQueryOptions {
+  /** Maximum time to wait for all projects (ms) */
+  timeoutMs?: number;
+  /** Whether to continue if some projects fail */
+  continueOnError?: boolean;
+  /** Filter to specific project names */
+  projectNames?: string[];
+  /** Reference date for relative time calculations (defaults to now, useful for testing) */
+  referenceDate?: Date;
+}

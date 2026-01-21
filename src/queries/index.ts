@@ -19,6 +19,14 @@ export {
   formatOpenCountResponse,
 } from './aggregated.js';
 
+export {
+  parseTimeRangePreset,
+  parseTimeQuery,
+  queryShippedItems,
+  formatShippedItemsResponse,
+  handleTimeBasedQuery,
+} from './time-based.js';
+
 export type {
   ProjectStatusResponse,
   StatusQueryOptions,
@@ -32,4 +40,11 @@ export type {
   StandupSummaryResponse,
   OpenCountResponse,
   AggregatedQueryOptions,
+  TimeRangePreset,
+  TimeRange,
+  ParsedTimeQuery,
+  ShippedItem,
+  ProjectShippedSummary,
+  ShippedItemsResponse,
+  TimeBasedQueryOptions,
 } from './types.js';
