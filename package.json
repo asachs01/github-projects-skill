@@ -1,0 +1,41 @@
+{
+  "name": "github-projects-skill",
+  "version": "1.0.0",
+  "description": "GitHub Projects Skill & Taskmaster Hook for conversational project management",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asachs01/github-projects-skill.git"
+  },
+  "keywords": [
+    "github",
+    "projects",
+    "taskmaster",
+    "claude",
+    "skill"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/asachs01/github-projects-skill/issues"
+  },
+  "homepage": "https://github.com/asachs01/github-projects-skill#readme",
+  "dependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^25.0.9",
+    "js-yaml": "^4.1.1",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.17"
+  }
+}
