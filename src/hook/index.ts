@@ -17,6 +17,9 @@ export {
   SyncStateSchema,
   SyncResult,
   SyncSummary,
+  ProjectItemStatus,
+  ProjectBoardAddResult,
+  ExtendedTaskMapping,
 } from './types.js';
 
 // Task Reader
@@ -68,3 +71,20 @@ export {
   type TaskSyncResult,
   type ExtendedSyncSummary,
 } from './sync.js';
+
+// Project Board Integration
+export {
+  determineInitialStatus,
+  hasUnresolvedDependencies,
+  getProjectContext,
+  findStatusOptionId,
+  validateStatus,
+  addIssueToProjectBoard,
+  selectProjectForRepo,
+  batchAddIssuesToProjectBoard,
+  type AddToProjectOptions,
+  type AddToProjectResult,
+  type InitialStatusOptions,
+  type BatchAddOptions,
+  type BatchIssueInput,
+} from './project-board.js';

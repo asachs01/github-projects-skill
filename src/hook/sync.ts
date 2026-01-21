@@ -24,6 +24,12 @@ import {
 import type { SyncState, SyncResult, SyncSummary, TaskmasterTask, TaskMapping } from './types.js';
 import { createIssueService, IssueService } from '../issues/service.js';
 import type { Issue } from '../issues/types.js';
+import {
+  determineInitialStatus,
+  hasUnresolvedDependencies,
+  type InitialStatusOptions,
+} from './project-board.js';
+import type { NormalizedConfig } from '../types/config.js';
 
 /**
  * Options for the sync operation
@@ -41,7 +47,7 @@ export interface SyncOptions {
   repo: string;
   /** Optional: GitHub Project ID to add issues to */
   projectId?: string;
-  /** Optional: Initial status for issues in the project */
+  /** Optional: Initial status for issues in the project (overrides auto-detection) */
   initialStatus?: string;
   /** Optional: Organization name for project status lookup */
   org?: string;
@@ -51,6 +57,14 @@ export interface SyncOptions {
   isOrg?: boolean;
   /** Dry run mode - don't actually create issues */
   dryRun?: boolean;
+  /**
+   * Auto-detect initial status based on task dependencies
+   * If true, issues with dependencies go to "Backlog", others to "Ready"
+   * Requires config to be provided for status field mapping
+   */
+  autoDetectStatus?: boolean;
+  /** Full config for status field mapping (required if autoDetectStatus is true) */
+  config?: NormalizedConfig;
 }
 
 /**
@@ -63,6 +77,10 @@ export interface TaskSyncResult extends SyncResult {
   createdIssue?: Issue;
   /** Project item ID if added to a project */
   projectItemId?: string;
+  /** Initial status set on the project item */
+  initialStatus?: string;
+  /** Whether the task had unresolved dependencies at sync time */
+  hadUnresolvedDependencies?: boolean;
 }
 
 /**
@@ -107,13 +125,30 @@ export async function syncTask(
     // Create the issue
     let createdIssue: Issue;
     let projectItemId: string | undefined;
+    let initialStatus: string | undefined;
+    let hadUnresolvedDeps = false;
 
     if (syncOptions.projectId) {
+      // Determine the initial status
+      if (syncOptions.autoDetectStatus && syncOptions.config) {
+        // Auto-detect based on dependencies
+        const statusOptions: InitialStatusOptions = {
+          task,
+          syncState: currentState,
+          statusMapping: syncOptions.config.statusFieldMapping,
+        };
+        initialStatus = determineInitialStatus(statusOptions);
+        hadUnresolvedDeps = hasUnresolvedDependencies(task, currentState);
+      } else if (syncOptions.initialStatus) {
+        // Use explicitly provided status
+        initialStatus = syncOptions.initialStatus;
+      }
+
       // Create issue and add to project
       const result = await issueService.createIssueInProject(
         mappedIssue.issueInput,
         syncOptions.projectId,
-        syncOptions.initialStatus,
+        initialStatus,
         syncOptions.org,
         syncOptions.projectNumber,
         syncOptions.isOrg
@@ -133,6 +168,8 @@ export async function syncTask(
       mappedIssue,
       createdIssue,
       projectItemId,
+      initialStatus,
+      hadUnresolvedDependencies: hadUnresolvedDeps,
     };
   } catch (error) {
     return {

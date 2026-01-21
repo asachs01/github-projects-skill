@@ -10,6 +10,15 @@ export {
   formatStatusResponse,
 } from './status.js';
 
+export {
+  queryBlockedItems,
+  formatBlockedItemsResponse,
+  queryStandupSummary,
+  formatStandupSummaryResponse,
+  queryOpenCount,
+  formatOpenCountResponse,
+} from './aggregated.js';
+
 export type {
   ProjectStatusResponse,
   StatusQueryOptions,
@@ -17,4 +26,10 @@ export type {
   StatusItem,
   GroupedItems,
   ParsedProjectQuery,
+  BlockedItem,
+  BlockedItemsResponse,
+  ProjectStandupSummary,
+  StandupSummaryResponse,
+  OpenCountResponse,
+  AggregatedQueryOptions,
 } from './types.js';

@@ -83,3 +83,108 @@ export interface ParsedProjectQuery {
   /** Original query text */
   originalQuery: string;
 }
+
+// ============================================================================
+// Aggregated Query Types
+// ============================================================================
+
+/**
+ * A blocked item with project context
+ */
+export interface BlockedItem {
+  /** Issue/PR number */
+  number: number;
+  /** Issue/PR title */
+  title: string;
+  /** URL to the issue/PR */
+  url: string;
+  /** Project name this item belongs to */
+  projectName: string;
+  /** Reason for being blocked (extracted from labels or notes) */
+  reason?: string;
+}
+
+/**
+ * Response for "what's blocking?" query across all projects
+ */
+export interface BlockedItemsResponse {
+  /** Whether the query was successful */
+  success: boolean;
+  /** Error message if unsuccessful */
+  error?: string;
+  /** All blocked items across projects */
+  blockedItems: BlockedItem[];
+  /** Total count of blocked items */
+  totalBlocked: number;
+  /** Timestamp when the data was fetched */
+  fetchedAt: Date;
+}
+
+/**
+ * Per-project summary for standup
+ */
+export interface ProjectStandupSummary {
+  /** Project name */
+  projectName: string;
+  /** Count of items in progress */
+  inProgressCount: number;
+  /** Count of blocked items */
+  blockedCount: number;
+  /** Count of items done this week */
+  doneThisWeekCount: number;
+  /** Whether fetching this project succeeded */
+  success: boolean;
+  /** Error message if fetching failed */
+  error?: string;
+}
+
+/**
+ * Response for "standup summary" query across all projects
+ */
+export interface StandupSummaryResponse {
+  /** Whether the overall query was successful */
+  success: boolean;
+  /** Error message if all projects failed */
+  error?: string;
+  /** Per-project summaries */
+  projectSummaries: ProjectStandupSummary[];
+  /** Total items in progress across all projects */
+  totalInProgress: number;
+  /** Total blocked items across all projects */
+  totalBlocked: number;
+  /** Total items done this week across all projects */
+  totalDoneThisWeek: number;
+  /** Timestamp when the data was fetched */
+  fetchedAt: Date;
+}
+
+/**
+ * Response for total open issues count across all projects
+ */
+export interface OpenCountResponse {
+  /** Whether the query was successful */
+  success: boolean;
+  /** Error message if unsuccessful */
+  error?: string;
+  /** Total open items across all projects */
+  totalOpen: number;
+  /** Per-project open counts */
+  projectCounts: Array<{
+    projectName: string;
+    openCount: number;
+    success: boolean;
+    error?: string;
+  }>;
+  /** Timestamp when the data was fetched */
+  fetchedAt: Date;
+}
+
+/**
+ * Options for aggregated queries
+ */
+export interface AggregatedQueryOptions {
+  /** Maximum time to wait for all projects (ms) */
+  timeoutMs?: number;
+  /** Whether to continue if some projects fail */
+  continueOnError?: boolean;
+}

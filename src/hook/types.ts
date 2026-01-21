@@ -86,3 +86,32 @@ export interface SyncSummary {
   failed: number;
   results: SyncResult[];
 }
+
+/**
+ * Project board item status
+ */
+export type ProjectItemStatus = 'backlog' | 'ready' | 'in_progress' | 'blocked' | 'done';
+
+/**
+ * Result of adding an issue to a project board
+ */
+export interface ProjectBoardAddResult {
+  /** The project item ID (from GraphQL) */
+  projectItemId: string;
+  /** The initial status that was set */
+  initialStatus: string;
+  /** The project's GraphQL node ID */
+  projectId: string;
+  /** Whether the task has any unresolved dependencies */
+  hasUnresolvedDependencies: boolean;
+}
+
+/**
+ * Extended task mapping with project board info
+ */
+export interface ExtendedTaskMapping extends TaskMapping {
+  /** Initial status when added to project */
+  initialStatus?: string;
+  /** Whether the task had unresolved dependencies at sync time */
+  hadUnresolvedDependencies?: boolean;
+}
