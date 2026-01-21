@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Robust sync state management with idempotency support
+  - Atomic file writes using temp file + rename pattern to prevent corruption
+  - Lock file mechanism for concurrent access protection (`acquireLock()`, `releaseLock()`)
+  - `writeSyncStateWithLock()` for thread-safe state updates
+  - `updateSyncStateWithLock()` for atomic read-modify-write operations
+- Cleanup and maintenance functions for sync state
+  - `cleanupStaleEntries()` to remove mappings for deleted tasks
+  - `cleanupStaleEntriesFromFile()` convenience wrapper with file I/O
+  - `cleanupStaleEntriesWithLock()` for concurrent access safety
+  - `verifyStateIntegrity()` to detect orphaned or inconsistent entries
+- Convenience wrapper functions for simpler sync state API
+  - `isSynced(taskId)` - Check if a task has been synced
+  - `markSynced(taskId, issueNumber, url)` - Record a sync with file I/O
+  - `markSyncedWithLock()` - Thread-safe version of markSynced
+  - `getMapping(taskId)` - Get GitHub mapping for a task
+- Sync idempotency verification
+  - `verifySyncIdempotency()` - Check if running sync would create duplicates
+  - Double-check idempotency within `syncTask()` to prevent race conditions
+- New sync options for robust operation
+  - `useLocking` - Enable file locking for concurrent access
+  - `cleanupStale` - Remove stale entries before syncing
+  - `saveAfterEachTask` - Save state after each task for partial failure recovery
+- Extended `ExtendedSyncSummary` with `staleEntriesRemoved` and `skippedDueToDuplicateCheck` fields
+- Comprehensive idempotency tests (60 total tests in hook.test.ts)
+
 - Cross-project aggregated queries for GitHub Projects
   - `queryBlockedItems()` - Get all blocked items across configured projects with "what's blocking?" query support
   - `queryStandupSummary()` - Daily standup summary showing in-progress, blocked, and done this week counts per project

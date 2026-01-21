@@ -41,6 +41,8 @@ export {
   createEmptySyncState,
   readSyncState,
   writeSyncState,
+  writeSyncStateWithLock,
+  updateSyncStateWithLock,
   isTaskSynced,
   getTaskMapping,
   addTaskMapping,
@@ -48,6 +50,19 @@ export {
   getSyncedTaskIds,
   getAllMappings,
   findMappingByIssueNumber,
+  // Convenience wrappers
+  isSynced,
+  markSynced,
+  markSyncedWithLock,
+  getMapping,
+  // Lock management
+  acquireLock,
+  releaseLock,
+  // Cleanup and maintenance
+  cleanupStaleEntries,
+  cleanupStaleEntriesFromFile,
+  cleanupStaleEntriesWithLock,
+  verifyStateIntegrity,
 } from './state.js';
 
 // Task to Issue Mapper
@@ -67,6 +82,7 @@ export {
   syncTask,
   syncTasks,
   formatSyncSummary,
+  verifySyncIdempotency,
   type SyncOptions,
   type TaskSyncResult,
   type ExtendedSyncSummary,

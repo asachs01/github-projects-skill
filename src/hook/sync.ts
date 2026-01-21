@@ -13,6 +13,10 @@ import {
   readSyncState,
   writeSyncState,
   addTaskMapping,
+  isTaskSynced,
+  cleanupStaleEntries,
+  acquireLock,
+  releaseLock,
   DEFAULT_STATE_PATH,
 } from './state.js';
 import {
@@ -65,6 +69,21 @@ export interface SyncOptions {
   autoDetectStatus?: boolean;
   /** Full config for status field mapping (required if autoDetectStatus is true) */
   config?: NormalizedConfig;
+  /**
+   * Use file locking for concurrent access safety
+   * Enable when multiple processes might sync simultaneously
+   */
+  useLocking?: boolean;
+  /**
+   * Clean up stale entries before syncing
+   * Removes mappings for tasks that no longer exist
+   */
+  cleanupStale?: boolean;
+  /**
+   * Save state after each successful task sync
+   * Provides better recovery from partial failures but more I/O
+   */
+  saveAfterEachTask?: boolean;
 }
 
 /**
@@ -88,6 +107,10 @@ export interface TaskSyncResult extends SyncResult {
  */
 export interface ExtendedSyncSummary extends SyncSummary {
   results: TaskSyncResult[];
+  /** Number of stale entries cleaned up (if cleanupStale was enabled) */
+  staleEntriesRemoved?: number;
+  /** Tasks that were skipped due to already being synced (idempotency) */
+  skippedDueToDuplicateCheck?: number;
 }
 
 /**
@@ -108,6 +131,21 @@ export async function syncTask(
   currentState: SyncState
 ): Promise<TaskSyncResult> {
   try {
+    // IDEMPOTENCY CHECK: Double-check the task is not already synced
+    // This is a safety net for race conditions or when state is updated between filtering and syncing
+    if (isTaskSynced(task.id, currentState)) {
+      const existingMapping = currentState.taskMappings[task.id];
+      return {
+        taskId: task.id,
+        success: true,
+        issueNumber: existingMapping.githubIssueNumber,
+        issueUrl: existingMapping.githubIssueUrl,
+        projectItemId: existingMapping.projectItemId,
+        // Mark this as a skip due to idempotency
+        error: 'SKIPPED_ALREADY_SYNCED',
+      };
+    }
+
     // Map the task to issue format
     const mappedIssue = mapTaskToIssue(task, {
       ...mapperOptions,
@@ -183,6 +221,9 @@ export async function syncTask(
 /**
  * Sync all unsynced Taskmaster tasks to GitHub issues
  *
+ * This function is idempotent - running it multiple times with the same tasks.json
+ * will not create duplicate issues. Tasks already in sync-state.json are skipped.
+ *
  * @param options - Sync options
  * @returns Summary of the sync operation
  */
@@ -194,78 +235,151 @@ export async function syncTasks(options: SyncOptions): Promise<ExtendedSyncSumma
     owner,
     repo,
     dryRun = false,
+    useLocking = false,
+    cleanupStale = false,
+    saveAfterEachTask = false,
   } = options;
 
-  // Read all tasks
-  const allTasks = getAllTasks(tasksPath);
+  let lockId: string | undefined;
 
-  // Read current sync state
-  let syncState = readSyncState(statePath);
+  try {
+    // Acquire lock if requested (for concurrent access safety)
+    if (useLocking && !dryRun) {
+      lockId = await acquireLock(statePath);
+    }
 
-  // Filter out already synced tasks
-  const tasksToSync = filterUnsyncedTasks(allTasks, syncState);
+    // Read all tasks
+    const allTasks = getAllTasks(tasksPath);
 
-  const summary: ExtendedSyncSummary = {
-    totalTasks: allTasks.length,
-    newlySynced: 0,
-    alreadySynced: allTasks.length - tasksToSync.length,
-    failed: 0,
-    results: [],
-  };
+    // Read current sync state
+    let syncState = readSyncState(statePath);
 
-  if (tasksToSync.length === 0) {
-    return summary;
-  }
+    // Initialize summary
+    const summary: ExtendedSyncSummary = {
+      totalTasks: allTasks.length,
+      newlySynced: 0,
+      alreadySynced: 0,
+      failed: 0,
+      results: [],
+      skippedDueToDuplicateCheck: 0,
+    };
 
-  // Create issue service (only if not dry run)
-  const issueService = dryRun ? null : createIssueService(token);
+    // Cleanup stale entries if requested
+    if (cleanupStale) {
+      const cleanupResult = cleanupStaleEntries(allTasks, syncState);
+      syncState = cleanupResult.state;
+      summary.staleEntriesRemoved = cleanupResult.removedCount;
 
-  const mapperOptions: MapperOptions = {
-    owner,
-    repo,
-    syncState,
-  };
-
-  // Sync each task
-  for (const task of tasksToSync) {
-    const result = await syncTask(
-      task,
-      issueService!,
-      mapperOptions,
-      options,
-      syncState
-    );
-
-    summary.results.push(result);
-
-    if (result.success) {
-      summary.newlySynced++;
-
-      // Update sync state with the new mapping
-      if (!dryRun && result.issueNumber && result.issueUrl) {
-        const mapping: TaskMapping = {
-          taskmasterId: task.id,
-          githubIssueNumber: result.issueNumber,
-          githubIssueUrl: result.issueUrl,
-          projectItemId: result.projectItemId,
-          syncedAt: new Date().toISOString(),
-        };
-        syncState = addTaskMapping(syncState, mapping);
-
-        // Update mapper options with new state for dependency resolution
-        mapperOptions.syncState = syncState;
+      if (cleanupResult.removedCount > 0 && !dryRun) {
+        writeSyncState(syncState, statePath);
       }
-    } else {
-      summary.failed++;
+    }
+
+    // Filter out already synced tasks
+    const tasksToSync = filterUnsyncedTasks(allTasks, syncState);
+    summary.alreadySynced = allTasks.length - tasksToSync.length;
+
+    if (tasksToSync.length === 0) {
+      return summary;
+    }
+
+    // Create issue service (only if not dry run)
+    const issueService = dryRun ? null : createIssueService(token);
+
+    const mapperOptions: MapperOptions = {
+      owner,
+      repo,
+      syncState,
+    };
+
+    // Sync each task
+    for (const task of tasksToSync) {
+      const result = await syncTask(
+        task,
+        issueService!,
+        mapperOptions,
+        options,
+        syncState
+      );
+
+      summary.results.push(result);
+
+      if (result.success) {
+        // Check if this was skipped due to idempotency check
+        if (result.error === 'SKIPPED_ALREADY_SYNCED') {
+          summary.alreadySynced++;
+          summary.skippedDueToDuplicateCheck = (summary.skippedDueToDuplicateCheck || 0) + 1;
+        } else {
+          summary.newlySynced++;
+
+          // Update sync state with the new mapping
+          if (!dryRun && result.issueNumber && result.issueUrl) {
+            const mapping: TaskMapping = {
+              taskmasterId: task.id,
+              githubIssueNumber: result.issueNumber,
+              githubIssueUrl: result.issueUrl,
+              projectItemId: result.projectItemId,
+              syncedAt: new Date().toISOString(),
+            };
+            syncState = addTaskMapping(syncState, mapping);
+
+            // Update mapper options with new state for dependency resolution
+            mapperOptions.syncState = syncState;
+
+            // Save state after each task if requested (for partial failure recovery)
+            if (saveAfterEachTask) {
+              writeSyncState(syncState, statePath);
+            }
+          }
+        }
+      } else {
+        summary.failed++;
+      }
+    }
+
+    // Write updated sync state (if not dry run and not saving after each task)
+    if (!dryRun && !saveAfterEachTask && summary.newlySynced > 0) {
+      writeSyncState(syncState, statePath);
+    }
+
+    return summary;
+  } finally {
+    // Always release lock
+    if (lockId) {
+      releaseLock(statePath, lockId);
     }
   }
+}
 
-  // Write updated sync state (if not dry run)
-  if (!dryRun) {
-    writeSyncState(syncState, statePath);
-  }
+/**
+ * Verify sync idempotency by checking if running sync again would create duplicates
+ *
+ * @param options - Sync options (without token, as this is a read-only check)
+ * @returns Object indicating if sync is idempotent and details
+ */
+export function verifySyncIdempotency(options: Pick<SyncOptions, 'tasksPath' | 'statePath'>): {
+  isIdempotent: boolean;
+  totalTasks: number;
+  syncedTasks: number;
+  unsyncedTasks: number;
+  unsyncedTaskIds: string[];
+} {
+  const {
+    tasksPath = DEFAULT_TASKS_PATH,
+    statePath = DEFAULT_STATE_PATH,
+  } = options;
 
-  return summary;
+  const allTasks = getAllTasks(tasksPath);
+  const syncState = readSyncState(statePath);
+  const unsyncedTasks = filterUnsyncedTasks(allTasks, syncState);
+
+  return {
+    isIdempotent: unsyncedTasks.length === 0,
+    totalTasks: allTasks.length,
+    syncedTasks: allTasks.length - unsyncedTasks.length,
+    unsyncedTasks: unsyncedTasks.length,
+    unsyncedTaskIds: unsyncedTasks.map(t => t.id),
+  };
 }
 
 /**
