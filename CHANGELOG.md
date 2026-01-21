@@ -65,3 +65,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced `TaskSyncResult` to include `initialStatus` and `hadUnresolvedDependencies` fields
 - Updated `sync.ts` to support automatic dependency-based status detection when adding issues to projects
 - Extended `hook/index.ts` exports to include all project board integration functions and types
+
+### Documentation
+
+- Comprehensive documentation update for full setup, usage, and examples
+  - Updated `github-projects/SKILL.md` with all query patterns and features:
+    - Status queries (single project, backlog, aggregate counts)
+    - Cross-project queries (blocking items, standup summary)
+    - Time-based queries (today, this week, last 7 days, monthly)
+    - Status updates with fuzzy matching
+    - Comments and notes
+    - Issue creation
+    - PR linking (manual links, finding linked PRs, suggestions)
+  - Created `docs/README.md` with hook setup and usage:
+    - Environment variable configuration
+    - `npm run sync-tasks` command documentation
+    - Programmatic usage examples
+    - Sync options reference
+    - Helper functions (isSynced, markSynced, verifySyncIdempotency)
+    - Dependency-based status detection
+  - Created `docs/troubleshooting.md` with common issues and solutions:
+    - Token scope requirements
+    - Finding project numbers and IDs
+    - Sync operation issues
+    - Rate limiting guidance
+    - Common error messages and fixes
+  - Created root `README.md` with quick start guide:
+    - Installation and configuration
+    - Query examples
+    - Architecture overview
+    - Development commands
