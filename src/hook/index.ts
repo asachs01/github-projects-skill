@@ -46,3 +46,25 @@ export {
   getAllMappings,
   findMappingByIssueNumber,
 } from './state.js';
+
+// Task to Issue Mapper
+export {
+  mapPriorityToLabel,
+  formatIssueBody,
+  resolveDependencies,
+  mapTaskToIssue,
+  mapTasksToIssues,
+  filterUnsyncedTasks,
+  type MapperOptions,
+  type MappedIssue,
+} from './mapper.js';
+
+// Sync Operations
+export {
+  syncTask,
+  syncTasks,
+  formatSyncSummary,
+  type SyncOptions,
+  type TaskSyncResult,
+  type ExtendedSyncSummary,
+} from './sync.js';

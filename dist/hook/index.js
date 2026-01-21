@@ -11,4 +11,8 @@ export { TaskmasterTaskSchema, TasksFileSchema, SyncStateSchema, } from './types
 export { DEFAULT_TASKS_PATH, readTasksFile, getAllTasks, getTasksByStatus, getTaskById, getTasksToSync, getPendingTasks, getInProgressTasks, getDoneTasks, } from './reader.js';
 // Sync State Management
 export { DEFAULT_STATE_PATH, createEmptySyncState, readSyncState, writeSyncState, isTaskSynced, getTaskMapping, addTaskMapping, removeTaskMapping, getSyncedTaskIds, getAllMappings, findMappingByIssueNumber, } from './state.js';
+// Task to Issue Mapper
+export { mapPriorityToLabel, formatIssueBody, resolveDependencies, mapTaskToIssue, mapTasksToIssues, filterUnsyncedTasks, } from './mapper.js';
+// Sync Operations
+export { syncTask, syncTasks, formatSyncSummary, } from './sync.js';
 //# sourceMappingURL=index.js.map
