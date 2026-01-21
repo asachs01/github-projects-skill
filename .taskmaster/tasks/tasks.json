@@ -65,8 +65,9 @@
         "dependencies": [
           "4"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-01-21T20:30:31.927Z"
       },
       {
         "id": "6",
@@ -118,8 +119,9 @@
         "dependencies": [
           "8"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-01-21T20:30:34.462Z"
       },
       {
         "id": "10",
@@ -159,8 +161,9 @@
         "dependencies": [
           "11"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-01-21T20:30:36.987Z"
       },
       {
         "id": "13",
@@ -218,9 +221,9 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-01-21T20:22:07.488Z",
+      "lastModified": "2026-01-21T20:30:36.987Z",
       "taskCount": 16,
-      "completedCount": 6,
+      "completedCount": 9,
       "tags": [
         "master"
       ]
